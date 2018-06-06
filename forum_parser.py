@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
-from requests import session
 import forum_link
 import re
+import aiohttp
 
 
 class forum_parser:
@@ -19,27 +19,27 @@ class forum_parser:
         self.site_name = None
         self.link = forum_link.forum_link(message_text)
 
-        if self.link.url:
-            page = self.get_page()
-            if page:
-                self.get_meta(page)
-                self.get_post(page)
-                if self.post:
-                    self.get_name()
-                    self.get_avlink()
-                    self.twitter_embed()
-                    self.format_images()
-                    self.youtube_embed()
-                    self.format_quotes()
-                    self.get_contents()
+    async def parse(self):
+        page = await self.get_page()
+        if page:
+            self.get_meta(page)
+            self.get_post(page)
+            if self.post:
+                self.get_name()
+                self.get_avlink()
+                self.twitter_embed()
+                self.format_images()
+                self.youtube_embed()
+                self.format_quotes()
+                self.get_contents()
 
-    def get_page(self):
+    async def get_page(self):
         """Gets the forum page"""
-        with session() as c:
-            response = c.get(self.link.url)
-            if response.status_code == 200:
-                page = BeautifulSoup(response.text, 'html.parser')
-                return page
+        with aiohttp.ClientSession() as a_session:
+            async with a_session.get(self.link.url) as response:
+                if response.status == 200:
+                    page = BeautifulSoup(await response.text(), 'html.parser')
+                    return page
 
     def get_meta(self, page):
         """Gets page, icon and title from metatags, should work for all forums"""

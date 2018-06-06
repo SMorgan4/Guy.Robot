@@ -15,6 +15,10 @@ class forum_preview:
         self.ui = None
         self.embed = None
         self.bot_message = None
+
+    async def get_post(self):
+        """Gets the post and builds the embed"""
+        await self.post.parse()
         if self.post.post:
             self.get_lines(self.post.content)
             self.build_embed()
