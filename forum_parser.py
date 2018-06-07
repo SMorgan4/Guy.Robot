@@ -20,6 +20,7 @@ class forum_parser:
         self.link = forum_link.forum_link(message_text)
 
     async def parse(self):
+        """Gets the page and runs all parsing operations"""
         page = await self.get_page()
         if page:
             self.get_meta(page)
@@ -101,11 +102,8 @@ class forum_parser:
     def format_quotes(self):
         """"Wraps quotes in code tag for aesthetics. Adds quote attribution link where possible."""
         if self.link.site == 'era':
-            for tag in self.post.findAll('div', class_="attribution type"):
-                text = tag.get_text()
-                link = tag.find('a', href=True)['href']
-                text = text.split("said:")[0]
-                tag.replace_with(f"[{text} said:]({self.site_base_url[self.link.site] + link})")
+            for attribution in self.post.findAll('div', class_="attribution type"):
+                self.attribute_quote(attribution)
             for tag in self.post.findAll('div', class_="quote"):
                 tag.replace_with(f"```{tag.get_text()}```")
             for tag in self.post.findAll('div', class_="quoteExpand"):
@@ -114,10 +112,23 @@ class forum_parser:
             for tag in self.post.findAll('div', class_=re.compile('bbCodeBlock.+quote')):
                 attribution = tag.find('a', class_='bbCodeBlock-sourceJump')
                 if attribution:
-                    attribution.replace_with(f"*{attribution.get_text()}*")
+                    self.attribute_quote(attribution)
                 quote = tag.find('div', class_='bbCodeBlock-expandContent')
                 quote.replace_with(f"```{quote.get_text()}```")
                 tag.find('div', class_='bbCodeBlock-expandLink').decompose()
+
+    def attribute_quote(self, tag):
+        """Gets the original poster and links to the original post if available"""
+        text = tag.get_text()
+        text = text.split("said:")[0]
+        if self.link.site == 'era':
+            link = tag.find('a', href=True)['href']
+        elif self.link.site == 'gaf':
+            link = tag['href']
+        if link:
+            tag.replace_with(f"[{text} said:]({self.site_base_url[self.link.site] + link})")
+        else:
+            tag.replace_with(f"{text} said:")
 
     def format_images(self):
         """Creates a list of images. Changes image tag to a URL."""
