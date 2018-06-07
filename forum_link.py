@@ -10,7 +10,7 @@ class forum_link():
         https://www.resetera.com/posts/6834173/
         https://www.resetera.com/threads/splatoon-2-physical-is-on-sale-for-50-on-amazon.36571/#post-6834255
         Gaf links should take the forms:
-        https://www.neogaf.com/threads/the-official-neogaf-introduce-yourself-thread.1460728/#post-253168024
+        https://www.neogaf.com/threads/lebron-james-offseason-questions.1462856/#post-253285971
         https://www.neogaf.com/threads/the-official-neogaf-introduce-yourself-thread.1460728/
         """
         self.message_text = message_text
@@ -46,7 +46,7 @@ class forum_link():
                 self.url = m.group()
                 if self.type == 'post':
                     self.get_post_id()
-                break
+                    break
         if not self.url:
             print('Unable to parse link in: ' + self.message_text)
 
