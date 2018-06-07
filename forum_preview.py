@@ -37,7 +37,6 @@ class forum_preview:
         """Creates the embed object based on parameters from the parser"""
         self.select_lines()
         if len(self.embed_text) > self.settings.max_chars:
-            # self.content = self.embed_text[self.settings.max_chars:]
             self.embed_text = self.embed_text[:self.settings.max_chars]
         if self.embed_text.count('```') % 2 != 0:
             self.embed_text += '```'
