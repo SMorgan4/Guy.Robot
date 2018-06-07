@@ -20,6 +20,7 @@ class forum_parser:
         self.link = forum_link.forum_link(message_text)
 
     async def parse(self):
+        """Gets the page and runs all parsing operations"""
         page = await self.get_page()
         if page:
             self.get_meta(page)

@@ -1,0 +1,6 @@
+
+*.pyc
+Config.cfg
+*.iml
+*.xml
+site_settings.json
