@@ -15,9 +15,10 @@ async def on_ready():
 async def on_message(message):
     if not message.author.bot:
         preview = forum_preview.forum_preview(message, settings)
-        await preview.get_post()
-        if preview.embed:
-            await preview.send()
-            await preview.ui.poll(client)
+        if preview.post.link.url:
+            await preview.get_post()
+            if preview.embed:
+                await preview.send()
+                await preview.ui.poll(client)
 
 client.run(settings.token)
