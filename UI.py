@@ -1,6 +1,5 @@
 import weakref
 import asyncio
-import discord
 
 
 class UI:
@@ -51,14 +50,14 @@ class UI:
 
     async def minimize(self, parent):
         """Sets the message size to minimum. The parent object must implement an update_size function."""
-        parent().update_size('std')
-        await parent().bot_message.edit(embed=self.parent().embed)
+        if parent().update_size('std'):
+            await parent().bot_message.edit(embed=self.parent().embed)
         return True
 
     async def maximize(self, parent):
         """Sets the message size to maximum. The parent object must implement an update_size function."""
-        parent().update_size('max')
-        await parent().bot_message.edit(embed=self.parent().embed)
+        if parent().update_size('max'):
+            await parent().bot_message.edit(embed=self.parent().embed)
         return True
 
     async def help(self, parent):
@@ -69,34 +68,35 @@ class UI:
 
 class UIResponse:
     """Generic class for embedded message with UI"""
-    def __init__(self, ctx, message):
+    def __init__(self, user_message, bot, message):
         self.bot_message = None
         self.ui = UI(self)
         self.embed = message
-        self.ctx = ctx
-        self.user_message = ctx.message
+        self.user_message = user_message
+        self.bot = bot
 
     async def send(self):
         """Sends message and starts UI"""
-        self.bot_message = await self.ctx.send(embed=self.embed)
-        await self.ui.start(self.ctx.bot)
+        self.bot_message = await self.user_message.channel.send(embed=self.embed)
+        await self.ui.start(self.bot)
 
 
 class CloseableResponse(UIResponse):
     """Class for user closable embedded bot messages"""
-    def __init__(self, ctx, message):
-        UIResponse.__init__(self, ctx, message)
+    def __init__(self, user_message, bot, message):
+        UIResponse.__init__(self, user_message, bot, message)
         self.ui = UI(self, element_list=["close"])
 
 
 class ResizeableResponse(UIResponse):
-    """Preview object creates and manages an embed object if supplied with a valid forum link"""
-    def __init__(self, ctx, message, settings, size="std"):
-        UIResponse.__init__(self, ctx, message)
+    """Creates an embedded message that is resizeable and closeable"""
+    def __init__(self, user_message, bot, message, settings, size="std"):
+        UIResponse.__init__(self, user_message, bot, message)
         self.settings = settings
         self.size = size
         self.lines = []
-        self.embed_text = ''
+        self.get_lines(self.embed.description)
+        self.select_lines()
 
     def get_lines(self, content):
         """Breaks the messages content into a series of lines roughly corresponding with one line of text on mobile"""
@@ -120,13 +120,21 @@ class ResizeableResponse(UIResponse):
         return no
 
     def select_lines(self):
-        """Selects the specified number of lines places them in embed_text"""
-        self.embed_text = ''
+        """Selects the specified number of lines places them in embed.description"""
+        self.embed.description = ''
         for line in range(0, self.no_lines()):
-            self.embed_text += self.lines[line]
+            self.embed.description += self.lines[line]
+        if len(self.embed.description) > self.settings.max_chars:
+            self.embed.description = self.embed.description[:self.settings.max_chars]
+        if self.embed.description.count('```') % 2 != 0:
+            self.embed.description += '```'
+        if len(self.lines) > self.no_lines():
+            self.embed.description += '\n*Continued...*'
 
     def update_size(self, size):
         """Updates the size of the embed and rebuilds it"""
         if self.size != size:
             self.size = size
-            self.embed.description =  self.embed_text
+            self.select_lines()
+            return True
+        return False
