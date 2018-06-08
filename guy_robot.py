@@ -1,17 +1,18 @@
-import discord
 import forum_preview
 import settings
+import gr_commands
+import discord
 from discord.ext import commands
 
-#client = discord.Client()
-settings = settings.settings()
 
+settings = settings.settings()
 bot = commands.Bot(command_prefix='!')
+
 
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user}')
-
+    await bot.change_presence(activity=discord.Game(name="!gr"))
 
 @bot.event
 async def on_message(message):
@@ -22,9 +23,11 @@ async def on_message(message):
             if preview.embed:
                 await preview.send()
                 await preview.ui.poll(bot)
+    await bot.process_commands(message)
 
-#@bot.command()
-#async def test(ctx):
-#    await ctx.send('success!')
+
+@bot.command()
+async def gr(ctx):
+    await gr_commands.about(ctx, settings)
 
 bot.run(settings.token)

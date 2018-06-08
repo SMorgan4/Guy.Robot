@@ -10,6 +10,7 @@ class settings():
         self.std_lines = int(self.config.get('embed_settings', 'std_lines'))
         self.max_lines = int(self.config.get('embed_settings', 'max_lines'))
         self.line_length = int(self.config.get('embed_settings', 'line_length'))
+        self.auth_link = self.config.get('discord', 'auth_link')
         self.token = None
         self.get_token()
 
