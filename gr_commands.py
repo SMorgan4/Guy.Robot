@@ -14,8 +14,7 @@ class SimpleEmbed:
 
     async def send(self):
         self.bot_message = await self.ctx.send(embed=self.embed)
-        await self.ui.build()
-        await self.ui.poll(self.ctx.bot)
+        await self.ui.start(self.ctx.bot)
 
 
 async def about(ctx, settings):

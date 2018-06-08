@@ -22,16 +22,13 @@ class UI:
     def perm_check(self, reaction, user):
         """Checks that the user has sufficient permissions to interact with the UI."""
         return(user == self.parent().user_message.author or
-               (user.permissions_in(self.parent().bot_message.channel).administrator and not user.bot)) \
-              and reaction.message.id == self.parent().bot_message.id
+               (user.permissions_in(self.parent().bot_message.channel).administrator and not user.bot))\
+                and reaction.message.id == self.parent().bot_message.id
 
-    async def build(self):
-        """Adds reaction buttons."""
+    async def start(self, bot):
+        """Adds reaction buttons and polls UI. """
         for key in self.elements:
             await self.parent().bot_message.add_reaction(key)
-
-    async def poll(self, bot):
-        """Checks if a user has interacted with a UI element and executes its function if so."""
         try:
             while True:
                 user_action = await bot.wait_for('reaction_add', timeout=86400, check=self.perm_check)

@@ -14,6 +14,7 @@ async def on_ready():
     print(f'We have logged in as {bot.user}')
     await bot.change_presence(activity=discord.Game(name="!gr"))
 
+
 @bot.event
 async def on_message(message):
     if not message.author.bot:
@@ -21,8 +22,7 @@ async def on_message(message):
         if preview.post.link.url:
             await preview.get_post()
             if preview.embed:
-                await preview.send()
-                await preview.ui.poll(bot)
+                await preview.send(bot)
     await bot.process_commands(message)
 
 

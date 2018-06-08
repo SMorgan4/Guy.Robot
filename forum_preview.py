@@ -12,7 +12,7 @@ class forum_preview:
         self.size = size
         self.lines = []
         self.embed_text = ''
-        self.ui = None
+        self.ui = UI.UI(self)
         self.embed = None
         self.bot_message = None
 
@@ -23,15 +23,10 @@ class forum_preview:
             self.get_lines(self.post.content)
             self.build_embed()
 
-    async def send(self):
+    async def send(self, bot):
         """Sends the message and builds UI on completion. Adds the bot message to self."""
         self.bot_message = await self.user_message.channel.send(embed=self.embed)
-        await self.build_ui()
-
-    async def build_ui(self):
-        """Adds UI to the preview. Cannot be run until the bot has posted a message to add it to."""
-        self.ui = UI.UI(self)
-        await self.ui.build()
+        await self.ui.start(bot)
 
     def build_embed(self):
         """Creates the embed object based on parameters from the parser"""
