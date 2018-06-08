@@ -17,10 +17,11 @@ async def on_ready():
 async def on_message(message):
     if not message.author.bot:
         preview = forum_preview.forum_preview(message, settings)
-        await preview.get_post()
-        if preview.embed:
-            await preview.send()
-            await preview.ui.poll(bot)
+        if preview.post.link.url:
+            await preview.get_post()
+            if preview.embed:
+                await preview.send()
+                await preview.ui.poll(bot)
 
 #@bot.command()
 #async def test(ctx):
