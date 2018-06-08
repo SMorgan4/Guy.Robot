@@ -1,6 +1,6 @@
 import weakref
 import asyncio
-
+import discord
 
 class UI:
     """Class for managing emoji UI. Includes the following elements by default: min, max, close. Pass a list of element
@@ -10,7 +10,19 @@ class UI:
         self.standard_elements = {'max': ('➕', self.maximize), 'min': ('➖', self.minimize), 'close': ('✖', self.close),
                                   'help': ('❓', self.help)}
         self.elements = {}
-        self.set_elements(element_list)
+        self.element_list = list(element_list)
+        self.set_elements(self.element_list)
+
+    def add_element(self, element):
+        self.element_list.append(element)
+        self.set_elements(self.element_list)
+
+    async def remove_element(self, element):
+        self.element_list = list(filter(lambda x: x != element, self.element_list))
+        #await self.parent().bot_message.clear_reactions()
+        self.set_elements(self.element_list)
+        #await self.start(self.parent().bot)
+        print(self.element_list)
 
     def set_elements(self, element_list):
         """Creates the list of elements to use in this UI. Supply elements names in a tuple.
@@ -61,19 +73,27 @@ class UI:
         return True
 
     async def help(self, parent):
-        await parent().help()
+        """Responds with the help text for the active command"""
+        response = CloseableResponse(parent().user_message, parent().bot,\
+                                        discord.Embed(title="Guy.Robot Help", description=parent().help_text))
+        await parent().ui.remove_element('help')
+        await response.send()
+        return True
 
 # Standard response classes
 
 
 class UIResponse:
     """Generic class for embedded message with UI"""
-    def __init__(self, user_message, bot, message):
+    def __init__(self, user_message, bot, message, help_text):
         self.bot_message = None
         self.ui = UI(self)
         self.embed = message
         self.user_message = user_message
         self.bot = bot
+        self.help_text = help_text
+        if help_text:
+            self.ui.add_element('help')
 
     async def send(self):
         """Sends message and starts UI"""
@@ -83,15 +103,15 @@ class UIResponse:
 
 class CloseableResponse(UIResponse):
     """Class for user closable embedded bot messages"""
-    def __init__(self, user_message, bot, message):
-        UIResponse.__init__(self, user_message, bot, message)
+    def __init__(self, user_message, bot, message, help_text=None):
+        UIResponse.__init__(self, user_message, bot, message, help_text)
         self.ui = UI(self, element_list=["close"])
 
 
 class ResizeableResponse(UIResponse):
     """Creates an embedded message that is resizeable and closeable"""
-    def __init__(self, user_message, bot, message, settings, size="std"):
-        UIResponse.__init__(self, user_message, bot, message)
+    def __init__(self, user_message, bot, message, settings, size="std", help_text=None):
+        UIResponse.__init__(self, user_message, bot, message, help_text)
         self.settings = settings
         self.size = size
         self.lines = []
