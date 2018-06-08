@@ -1,23 +1,29 @@
 import discord
 import forum_preview
 import settings
+from discord.ext import commands
 
-client = discord.Client()
+#client = discord.Client()
 settings = settings.settings()
 
+bot = commands.Bot(command_prefix='!')
 
-@client.event
+@bot.event
 async def on_ready():
-    print(f'We have logged in as {client.user}')
+    print(f'We have logged in as {bot.user}')
 
 
-@client.event
+@bot.event
 async def on_message(message):
     if not message.author.bot:
         preview = forum_preview.forum_preview(message, settings)
         await preview.get_post()
         if preview.embed:
             await preview.send()
-            await preview.ui.poll(client)
+            await preview.ui.poll(bot)
 
-client.run(settings.token)
+#@bot.command()
+#async def test(ctx):
+#    await ctx.send('success!')
+
+bot.run(settings.token)

@@ -30,11 +30,11 @@ class UI:
         for key in self.elements:
             await self.parent().bot_message.add_reaction(key)
 
-    async def poll(self, client):
+    async def poll(self, bot):
         """Checks if a user has interacted with a UI element and executes its function if so."""
         try:
             while True:
-                user_action = await client.wait_for('reaction_add', timeout=86400, check=self.perm_check)
+                user_action = await bot.wait_for('reaction_add', timeout=86400, check=self.perm_check)
                 try:
                     keep_open = await self.elements[str(user_action[0])](self.parent)
                     if not keep_open:
