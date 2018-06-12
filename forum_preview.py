@@ -7,7 +7,7 @@ class forum_preview:
     """Preview object creates and manages an embed object if supplied with a valid forum link"""
     def __init__(self, user_message, settings, size='std'):
         self.user_message = user_message
-        self.post = forum_parser.forum_parser(user_message.content)
+        self.post = forum_parser.forum_parser(user_message)
         self.settings = settings
         self.size = size
         self.lines = []
