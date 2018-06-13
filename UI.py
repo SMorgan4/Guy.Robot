@@ -46,6 +46,7 @@ class UI:
             while True:
                 user_action = await bot.wait_for('reaction_add', timeout=86400, check=self.perm_check)
                 try:
+                    print(user_action[1].id)
                     keep_open = await self.elements[str(user_action[0])](self.parent)
                     if not keep_open:
                         break
@@ -57,7 +58,7 @@ class UI:
 # Standard UI functions
     async def close(self, parent):
         """Deletes the UI element's message."""
-        await parent().bot_message.delete()
+        await parent().close()
         return False
 
     async def minimize(self, parent):
@@ -74,10 +75,9 @@ class UI:
 
     async def help(self, parent):
         """Responds with the help text for the active command"""
-        response = CloseableResponse(parent().user_message, parent().bot,\
-                                        discord.Embed(title="Guy.Robot Help", description=parent().help_text))
+        await parent().add_child(CloseableResponse(parent().user_message, parent().bot,\
+                                        discord.Embed(title="Guy.Robot Help", description=parent().help_text), parent=parent))
         await parent().ui.remove_element('help')
-        await response.send()
         return True
 
 # Standard response classes
@@ -85,15 +85,29 @@ class UI:
 
 class UIResponse:
     """Generic class for embedded message with UI"""
-    def __init__(self, user_message, bot, message, help_text):
+    def __init__(self, user_message, bot, message, help_text, parent=None):
         self.bot_message = None
         self.ui = UI(self)
         self.embed = message
         self.user_message = user_message
         self.bot = bot
         self.help_text = help_text
+        self.children = []
+        self.parent = parent
         if help_text:
             self.ui.add_element('help')
+
+    async def add_child(self, child):
+        self.children.append(child)
+        await child.send()
+
+    async def close(self):
+        if self.parent:
+            self.parent().children.remove(self)
+        for child in self.children:
+            await child.close()
+            self.children.remove(child)
+        await self.bot_message.delete()
 
     async def send(self):
         """Sends message and starts UI"""
@@ -103,15 +117,15 @@ class UIResponse:
 
 class CloseableResponse(UIResponse):
     """Class for user closable embedded bot messages"""
-    def __init__(self, user_message, bot, message, help_text=None):
-        UIResponse.__init__(self, user_message, bot, message, help_text)
+    def __init__(self, user_message, bot, message, help_text=None, parent=None):
+        UIResponse.__init__(self, user_message, bot, message, help_text, parent)
         self.ui = UI(self, element_list=["close"])
 
 
 class ResizeableResponse(UIResponse):
     """Creates an embedded message that is resizeable and closeable"""
-    def __init__(self, user_message, bot, message, settings, size="std", help_text=None):
-        UIResponse.__init__(self, user_message, bot, message, help_text)
+    def __init__(self, user_message, bot, message, settings, size="std", help_text=None, parent=None):
+        UIResponse.__init__(self, user_message, bot, message, help_text, parent)
         self.settings = settings
         self.size = size
         self.lines = []
