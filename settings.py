@@ -11,19 +11,4 @@ class settings():
         self.max_lines = int(self.config.get('embed_settings', 'max_lines'))
         self.line_length = int(self.config.get('embed_settings', 'line_length'))
         self.auth_link = self.config.get('discord', 'auth_link')
-        self.token = None
-        self.get_token()
-
-    def get_token(self):
-        """Selects the bot's token at runtime"""
-        valid = False
-        while not valid:
-            mode = input('Mode: Test or release (T/R):').lower()
-            if mode == 't':
-                mode = 'test'
-                valid = True
-            elif mode == 'r':
-                mode = 'release'
-                valid = True
-        print(f'Loading {mode} settings')
-        self.token = self.config.get('discord_token', mode)
+        self.token = self.config.get('discord', 'token')
