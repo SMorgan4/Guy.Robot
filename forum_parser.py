@@ -17,6 +17,7 @@ class forum_parser:
         self.videos = []
         self.icon = None
         self.site_name = None
+        self.poster_link = None
         self.link = forum_link.forum_link(message)
 
     async def parse(self):
@@ -67,7 +68,13 @@ class forum_parser:
             print(f'Error identifying post in {self.link.site} {self.link.type}: {self.link.url}')
 
     def get_name(self):
-        self.name = self.post.find("a", itemprop="name").get_text()
+        poster = self.post.find("a", itemprop="name")
+        self.name = poster.get_text()
+        self.poster_link = poster['href']
+        if self.poster_link.startswith('/'):
+            self.poster_link = self.poster_link[1:]
+        self.poster_link = self.site_base_url[self.link.site] + self.poster_link
+
 
     def get_avlink(self):
         """Gets the link to the poster's avatar"""
