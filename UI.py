@@ -20,6 +20,7 @@ class UI:
 
     async def remove_element(self, element):
         self.element_list = list(filter(lambda x: x != element, self.element_list))
+        self.set_elements(self.element_list)
 
     def set_elements(self, element_list):
         """Creates the list of elements to use in this UI. Supply elements names in a tuple.
@@ -104,10 +105,13 @@ class user_action:
 
 class UIResponse(NodeMixin):
     """Generic class for embedded message with UI"""
-    def __init__(self, user_message, bot, message, help_text, parent=None, parent_user=None):
+    def __init__(self, user_message, bot, message, help_text, parent=None, parent_user=None, ui_elements=None):
         self.parent = parent
         self.bot_message = None
-        self.ui = UI(self)
+        if ui_elements:
+            self.ui = UI(self, ui_elements)
+        else:
+            self.ui = UI(self)
         self.embed = message
         self.user_message = user_message
         self.bot = bot
@@ -135,18 +139,20 @@ class UIResponse(NodeMixin):
 class CloseableResponse(UIResponse):
     """Class for user closable embedded bot messages"""
     def __init__(self, user_message, bot, message, help_text=None, parent=None, parent_user=None):
-        UIResponse.__init__(self, user_message, bot, message, help_text, parent, parent_user)
-        self.ui = UI(self, element_list=["close"])
+        UIResponse.__init__(self, user_message, bot, message, help_text, parent, parent_user, ui_elements=["close"])
 
 
 class ResizeableResponse(UIResponse):
     """Creates an embedded message that is resizeable and closeable"""
     def __init__(self, user_message, bot, message, settings, size="std", help_text=None, parent=None, parent_user=None):
-        UIResponse.__init__(self, user_message, bot, message, help_text, parent, parent_user)
         self.settings = settings
         self.size = size
         self.lines = []
-        self.get_lines(self.embed.description)
+        self.get_lines(message.description)
+        ui_elements = None
+        if len(self.lines) < self.settings.std_lines:
+            ui_elements = ["close"]
+        UIResponse.__init__(self, user_message, bot, message, help_text, parent, parent_user, ui_elements=ui_elements)
         self.select_lines()
 
     def get_lines(self, content):
