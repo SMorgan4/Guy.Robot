@@ -1,6 +1,7 @@
 import weakref
 import asyncio
 import discord
+from anytree import NodeMixin, PreOrderIter
 
 class UI:
     """Class for managing emoji UI. Includes the following elements by default: min, max, close. Pass a list of element
@@ -19,10 +20,6 @@ class UI:
 
     async def remove_element(self, element):
         self.element_list = list(filter(lambda x: x != element, self.element_list))
-        #await self.parent().bot_message.clear_reactions()
-        self.set_elements(self.element_list)
-        #await self.start(self.parent().bot)
-        print(self.element_list)
 
     def set_elements(self, element_list):
         """Creates the list of elements to use in this UI. Supply elements names in a tuple.
@@ -34,79 +31,99 @@ class UI:
 
     def perm_check(self, reaction, user):
         """Checks that the user has sufficient permissions to interact with the UI."""
-        return(user == self.parent().user_message.author or
-               (user.permissions_in(self.parent().bot_message.channel).administrator and not user.bot))\
-                and reaction.message.id == self.parent().bot_message.id
+        return (self.is_parent_user(user) or self.is_admin) and not user.bot
+
+    def is_parent_user(self, user):
+        if user in [node.parent_user for node in PreOrderIter(self.parent().root)]:
+            return True
+
+    def is_admin(self, user):
+        return user.permissions_in(self.parent().bot_message.channel).administrator
+
+    async def add_reactions(self):
+        for key in self.elements:
+            await self.parent().bot_message.add_reaction(key)
 
     async def start(self, bot):
         """Adds reaction buttons and polls UI. """
-        for key in self.elements:
-            await self.parent().bot_message.add_reaction(key)
+        await self.add_reactions()
         try:
-            while True:
-                user_action = await bot.wait_for('reaction_add', timeout=86400, check=self.perm_check)
+            keep_open = True
+            while keep_open:
+                reaction = await bot.wait_for('reaction_add', timeout=86400, check=self.perm_check)
+                action = user_action(self.parent, reaction)
                 try:
-                    print(user_action[1].id)
-                    keep_open = await self.elements[str(user_action[0])](self.parent)
-                    if not keep_open:
-                        break
+                    for node in PreOrderIter(self.parent().root):
+                        if action.message.id == node.bot_message.id:
+                            action.parent = weakref.ref(node)
+                            keep_open = await node.ui.elements[str(action.emoji)](action)
                 except KeyError:
                     pass
         except asyncio.TimeoutError:
             pass
 
+
 # Standard UI functions
-    async def close(self, parent):
+    async def close(self, action):
         """Deletes the UI element's message."""
-        await parent().close()
+        await action.parent().close()
         return False
 
-    async def minimize(self, parent):
+    async def minimize(self, action):
         """Sets the message size to minimum. The parent object must implement an update_size function."""
-        if parent().update_size('std'):
-            await parent().bot_message.edit(embed=self.parent().embed)
+        if action.parent().update_size('std'):
+            await action.parent().bot_message.edit(embed=self.parent().embed)
         return True
 
-    async def maximize(self, parent):
+    async def maximize(self, action):
         """Sets the message size to maximum. The parent object must implement an update_size function."""
-        if parent().update_size('max'):
-            await parent().bot_message.edit(embed=self.parent().embed)
+        if action.parent().update_size('max'):
+            await action.parent().bot_message.edit(embed=self.parent().embed)
         return True
 
-    async def help(self, parent):
+    async def help(self, action):
         """Responds with the help text for the active command"""
-        await parent().add_child(CloseableResponse(parent().user_message, parent().bot,\
-                                        discord.Embed(title="Guy.Robot Help", description=parent().help_text), parent=parent))
-        await parent().ui.remove_element('help')
+        response = CloseableResponse(action.parent().bot_message, action.parent().bot,\
+                                        discord.Embed(title="Guy.Robot Help", description=action.parent().help_text), parent=action.parent(), parent_user=action.user.id)
+
+        await action.parent().ui.remove_element('help')
+        await response.send()
         return True
+
+
+class user_action:
+    """Class containing user ui interactions"""
+    def __init__(self, parent, reaction):
+        self.emoji = reaction[0]
+        self.parent = parent
+        self.user = reaction[1]
+        self.message = reaction[0].message
 
 # Standard response classes
 
 
-class UIResponse:
+class UIResponse(NodeMixin):
     """Generic class for embedded message with UI"""
-    def __init__(self, user_message, bot, message, help_text, parent=None):
+    def __init__(self, user_message, bot, message, help_text, parent=None, parent_user=None):
+        self.parent = parent
         self.bot_message = None
         self.ui = UI(self)
         self.embed = message
         self.user_message = user_message
         self.bot = bot
         self.help_text = help_text
-        self.children = []
-        self.parent = parent
+        if parent_user:
+            self.parent_user = parent_user
+        else:
+            self.parent_user = user_message.author
         if help_text:
             self.ui.add_element('help')
 
-    async def add_child(self, child):
-        self.children.append(child)
-        await child.send()
-
     async def close(self):
+        for node in self.descendants:
+            await node.close()
         if self.parent:
-            self.parent().children.remove(self)
-        for child in self.children:
-            await child.close()
-            self.children.remove(child)
+            self.parent.children = self.siblings
         await self.bot_message.delete()
 
     async def send(self):
@@ -117,15 +134,15 @@ class UIResponse:
 
 class CloseableResponse(UIResponse):
     """Class for user closable embedded bot messages"""
-    def __init__(self, user_message, bot, message, help_text=None, parent=None):
-        UIResponse.__init__(self, user_message, bot, message, help_text, parent)
+    def __init__(self, user_message, bot, message, help_text=None, parent=None, parent_user=None):
+        UIResponse.__init__(self, user_message, bot, message, help_text, parent, parent_user)
         self.ui = UI(self, element_list=["close"])
 
 
 class ResizeableResponse(UIResponse):
     """Creates an embedded message that is resizeable and closeable"""
-    def __init__(self, user_message, bot, message, settings, size="std", help_text=None, parent=None):
-        UIResponse.__init__(self, user_message, bot, message, help_text, parent)
+    def __init__(self, user_message, bot, message, settings, size="std", help_text=None, parent=None, parent_user=None):
+        UIResponse.__init__(self, user_message, bot, message, help_text, parent, parent_user)
         self.settings = settings
         self.size = size
         self.lines = []
