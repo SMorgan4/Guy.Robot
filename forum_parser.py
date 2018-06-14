@@ -86,10 +86,8 @@ class forum_parser:
         for tag in self.content.findAll('script'):
             tag.decompose()
         self.mark_down_links()
-        self.content = self.content.get_text()
+        self.content = self.content.get_text().strip()
         self.content = re.sub('\n+', '\n', self.content)
-        if self.content.startswith('\n'):
-            self.content = self.content[1:]
 
     def mark_down_links(self):
         """Marks down all links in a post. Runs after format quotes as to not mark down links within quotes because
@@ -105,7 +103,7 @@ class forum_parser:
             for attribution in self.post.findAll('div', class_="attribution type"):
                 self.attribute_quote(attribution)
             for tag in self.post.findAll('div', class_="quote"):
-                tag.replace_with(f"```{tag.get_text()}```")
+                tag.replace_with(f"```{tag.get_text().strip()}```")
             for tag in self.post.findAll('div', class_="quoteExpand"):
                 tag.decompose()
         if self.link.site == 'gaf':
@@ -114,7 +112,7 @@ class forum_parser:
                 if attribution:
                     self.attribute_quote(attribution)
                 quote = tag.find('div', class_='bbCodeBlock-expandContent')
-                quote.replace_with(f"```{quote.get_text()}```")
+                quote.replace_with(f"```{quote.get_text().strip()}```")
                 tag.find('div', class_='bbCodeBlock-expandLink').decompose()
 
     def attribute_quote(self, tag):
