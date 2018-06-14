@@ -147,23 +147,22 @@ class CloseableResponse(UIResponse):
 
 class ResizeableResponse(UIResponse):
     """Creates an embedded message that is resizeable and closeable"""
-    def __init__(self, user_message, bot, message, settings, size="std", help_text=None, parent=None, parent_user=None):
-        self.settings = settings
+    def __init__(self, user_message, bot, message, size="std", help_text=None, parent=None, parent_user=None):
         self.size = size
         self.lines = []
-        self.get_lines(message.description)
+        self.get_lines(message.description, bot.settings.line_length)
         ui_elements = None
-        if len(self.lines) < self.settings.std_lines:
+        if len(self.lines) < bot.settings.std_lines:
             ui_elements = ["close"]
         UIResponse.__init__(self, user_message, bot, message, help_text, parent, parent_user, ui_elements=ui_elements)
         self.select_lines()
 
-    def get_lines(self, content):
+    def get_lines(self, content, line_length):
         """Breaks the messages content into a series of lines roughly corresponding with one line of text on mobile"""
         while content != '':
             new_line = content.split('\n', 1)[0] + '\n'
-            if len(new_line) > self.settings.line_length:
-                new_line = content[:self.settings.line_length-1]
+            if len(new_line) > line_length:
+                new_line = content[:line_length-1]
                 content = content[len(new_line):]
             else:
                 content = content[len(new_line):]
@@ -172,9 +171,9 @@ class ResizeableResponse(UIResponse):
     def no_lines(self):
         """Returns the number of lines for a given setting"""
         if self.size == 'max':
-            no = self.settings.max_lines
+            no = self.bot.settings.max_lines
         else:
-            no = self.settings.std_lines
+            no = self.bot.settings.std_lines
         if no > len(self.lines):
             no = len(self.lines)
         return no
@@ -184,8 +183,8 @@ class ResizeableResponse(UIResponse):
         self.embed.description = ''
         for line in range(0, self.no_lines()):
             self.embed.description += self.lines[line]
-        if len(self.embed.description) > self.settings.max_chars:
-            self.embed.description = self.embed.description[:self.settings.max_chars]
+        if len(self.embed.description) > self.bot.settings.max_chars:
+            self.embed.description = self.embed.description[:self.bot.settings.max_chars]
         if self.embed.description.count('```') % 2 != 0:
             self.embed.description += '```'
         if len(self.lines) > self.no_lines():

@@ -1,12 +1,21 @@
 import forum_preview
-import settings
-import gr_commands
 import discord
-from discord.ext import commands
+import sys
+import traceback
+import gr_bot
 
+bot = gr_bot.gr_bot(command_prefix='!')
 
-settings = settings.settings()
-bot = commands.Bot(command_prefix='!')
+initial_extensions = ['cogs.meta']
+
+# load initial extensions
+if __name__ == '__main__':
+    for extension in initial_extensions:
+        try:
+            bot.load_extension(extension)
+        except Exception as e:
+            print(f'Failed to load extension {extension}.', file=sys.stderr)
+            traceback.print_exc()
 
 
 @bot.event
@@ -18,12 +27,7 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     if not message.author.bot:
-        await forum_preview.forum_preview(message, bot, settings)
+        await forum_preview.forum_preview(message, bot)
     await bot.process_commands(message)
 
-
-@bot.command()
-async def gr(ctx):
-    await gr_commands.about(ctx.message, bot, settings)
-
-bot.run(settings.token)
+bot.run(bot.settings.token)
