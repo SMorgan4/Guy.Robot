@@ -66,26 +66,29 @@ class UI:
 
 # Standard UI functions
     async def close(self, action):
-        """Deletes the UI element's message."""
+        """Deletes message."""
         await action.parent().close()
         return False
 
     async def minimize(self, action):
-        """Sets the message size to minimum. The parent object must implement an update_size function."""
+        """Sets message size to minimum."""
         if action.parent().update_size('std'):
             await action.parent().bot_message.edit(embed=self.parent().embed)
         return True
 
     async def maximize(self, action):
-        """Sets the message size to maximum. The parent object must implement an update_size function."""
+        """Sets message size to maximum."""
         if action.parent().update_size('max'):
             await action.parent().bot_message.edit(embed=self.parent().embed)
         return True
 
     async def help(self, action):
-        """Responds with the help text for the active command"""
+        """Shows help message."""
+        help_text = action.parent().help_text
+        for element in action.parent().ui.elements:
+            help_text = f"{help_text}\n{element[0]}: {action.parent().ui.elements[element].__doc__}"
         response = CloseableResponse(action.parent().bot_message, action.parent().bot,\
-                                        discord.Embed(title="Guy.Robot Help", description=action.parent().help_text), parent=action.parent(), parent_user=action.user.id)
+                                        discord.Embed(title="Guy.Robot Help", description=help_text), parent=action.parent(), parent_user=action.user.id)
 
         await action.parent().ui.remove_element('help')
         await response.send()
