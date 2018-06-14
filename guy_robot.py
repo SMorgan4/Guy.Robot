@@ -18,16 +18,12 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     if not message.author.bot:
-        preview = forum_preview.forum_preview(message, settings)
-        if preview.post.link.url:
-            await preview.get_post()
-            if preview.embed:
-                await preview.send(bot)
+        await forum_preview.forum_preview(message, bot, settings)
     await bot.process_commands(message)
 
 
 @bot.command()
 async def gr(ctx):
-    await gr_commands.about(ctx, settings)
+    await gr_commands.about(ctx.message, bot, settings)
 
 bot.run(settings.token)

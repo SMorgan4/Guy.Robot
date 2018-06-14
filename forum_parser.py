@@ -6,7 +6,7 @@ import aiohttp
 
 class forum_parser:
     """Parses a post and stores its data"""
-    def __init__(self, message_text):
+    def __init__(self, message):
         self.site_base_url = {'era': 'https://www.resetera.com/', 'gaf': 'https://neogaf.com/'}
         self.post = None
         self.name = None
@@ -17,7 +17,7 @@ class forum_parser:
         self.videos = []
         self.icon = None
         self.site_name = None
-        self.link = forum_link.forum_link(message_text)
+        self.link = forum_link.forum_link(message)
 
     async def parse(self):
         """Gets the page and runs all parsing operations"""
