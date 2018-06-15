@@ -6,7 +6,7 @@ import gr_bot
 
 bot = gr_bot.gr_bot(command_prefix='!')
 
-initial_extensions = ['cogs.meta']
+initial_extensions = ['cogs.meta', 'cogs.cogs']
 
 # load initial extensions
 if __name__ == '__main__':

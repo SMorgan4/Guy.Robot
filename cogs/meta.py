@@ -25,6 +25,7 @@ class meta_cog:
     @commands.command(name='servers', hidden=True)
     @commands.is_owner()
     async def servers(self, ctx):
+        """Lists the servers that the bot is currently a member of."""
         title = 'Current bot servers:'
         text = ''
         for guild in ctx.bot.guilds:
@@ -35,6 +36,7 @@ class meta_cog:
     @commands.command(name='process', hidden=True)
     @commands.is_owner()
     async def process(self, ctx):
+        """Lists data about the bots process and performance."""
         pid = os.getpid()
         process = psutil.Process(pid)
         ram = f'{int(process.memory_info().rss/1000000)}MB'
