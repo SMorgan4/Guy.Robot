@@ -18,8 +18,7 @@ async def forum_preview(message, bot):
                 embed.set_author(name=post.name)
             if post.images:
                 embed.set_image(url=post.images[0])
-            if post.link.site == 'era':
-                embed.color = 8343994
+            embed.color = bot.settings.sites[post.link.site].color
             embed.set_footer(text=post.site_name, icon_url=post.icon)
             response = UI.ResizeableResponse(message, bot, embed, help_text=help_text)
             await response.send()
