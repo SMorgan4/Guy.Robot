@@ -1,15 +1,15 @@
 [
-  {"name": "era", "base_url": "https://www.resetera.com/", "color": "9130172", "forum_links":[
+  {"name": "era", "base_url": "https://www.resetera.com/", "color": "9130172", "forum_links":
     {"post":[
       "https://www.resetera.com/threads/.+#post-\\d+",
       "https://www.resetera.com/posts/\\d+"],
     "thread":[
       "https://www.resetera.com/threads/.+\\.\\d+",
       "https://www.resetera.com/threads/\\d+"
-    ]}]},
-  {"name": "gaf", "base_url": "https://neogaf.com/", "color": "16750848", "forum_links":[
+    ]}},
+  {"name": "gaf", "base_url": "https://www.neogaf.com/", "color": "16750848", "forum_links":
     {"post":["https://www.neogaf.com/threads/.+#post-\\d+"],
       "thread":["https://www.neogaf.com/threads/.+\\.\\d+"
     ]}
-  ]}
+  }
 ]

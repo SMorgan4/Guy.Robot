@@ -20,7 +20,7 @@ class settings():
             forums = json.loads(data)
         for item in forums:
             self.sites[item['name']] = (forum_settings(item['name'], item['base_url'], int(item['color']), item['forum_links']))
-        print(self.sites['era'])
+        print(str(self.sites))
 
 
 class forum_settings():
@@ -30,6 +30,9 @@ class forum_settings():
         self.base_url = base_url
         self.color = color
         self.forum_links = forum_links
+
+    def __repr__(self):
+        return f'Name: {self.name} Base URL: {self.base_url} Color: {self.color}'
 
     def __str__(self):
         return f'Name: {self.name} Base URL: {self.base_url} Color: {self.color}'
