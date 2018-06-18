@@ -94,6 +94,10 @@ class UI:
         await response.send()
         return True
 
+    async def show_spoiler(self, action):
+        spoilers = action.parent().spoilers
+        for
+
 
 class user_action:
     """Class containing user ui interactions"""
@@ -108,7 +112,7 @@ class user_action:
 
 class UIResponse(NodeMixin):
     """Generic class for embedded message with UI"""
-    def __init__(self, user_message, bot, message, help_text, parent=None, parent_user=None, ui_elements=None):
+    def __init__(self, user_message, bot, message, help_text, parent=None, parent_user=None, ui_elements=None, spoilers=None):
         self.parent = parent
         self.bot_message = None
         if ui_elements:
@@ -125,6 +129,8 @@ class UIResponse(NodeMixin):
             self.parent_user = user_message.author
         if help_text:
             self.ui.add_element('help')
+        if spoilers:
+            self.ui.add_element('show_spoiler')
 
     async def close(self):
         for node in self.descendants:
