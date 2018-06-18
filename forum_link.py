@@ -26,12 +26,8 @@ class forum_link():
     def check_base(self):
         """Returns true if at least one base url exists in the message"""
         for i in self.sites:
-            print(i)
-            print(self.sites[i].base_url)
-            print(self.message.content)
             if self.sites[i].base_url in self.message.content:
                 self.site = self.sites[i].name
-                print(self.site)
                 return True
         return False
 

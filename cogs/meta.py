@@ -44,6 +44,24 @@ class meta_cog:
         response = UI.CloseableResponse(ctx.message, ctx.bot, message)
         await response.send()
 
+    @commands.command(name='load_bot_settings', hidden='True')
+    @commands.is_owner()
+    async def load_bot_settings(self, ctx):
+        try:
+            ctx.bot.settings.load_bot_settings()
+            await ctx.send('✔️')
+        except:
+            pass
+
+    @commands.command(name='load_forum_settings', hidden='True')
+    @commands.is_owner()
+    async def load_forum_settings(self, ctx):
+        try:
+            ctx.bot.settings.load_forum_settings()
+            await ctx.send('✔️')
+        except:
+            pass
+
 
 def setup(bot):
     bot.add_cog(meta_cog(bot))
