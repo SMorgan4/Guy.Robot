@@ -6,8 +6,7 @@ import aiohttp
 
 class forum_parser:
     """Parses a post and stores its data"""
-    def __init__(self, message):
-        self.site_base_url = {'era': 'https://www.resetera.com/', 'gaf': 'https://neogaf.com/'}
+    def __init__(self, message, bot):
         self.post = None
         self.name = None
         self.avlink = None
@@ -19,7 +18,9 @@ class forum_parser:
         self.icon = None
         self.site_name = None
         self.poster_link = None
-        self.link = forum_link.forum_link(message)
+        self.link = forum_link.forum_link(message, bot.settings.sites)
+        if self.link.url:
+            self.base_url = bot.settings.sites[self.link.site].base_url
 
     async def parse(self):
         """Gets the page and runs all parsing operations"""
@@ -76,7 +77,7 @@ class forum_parser:
         self.poster_link = poster['href']
         if self.poster_link.startswith('/'):
             self.poster_link = self.poster_link[1:]
-        self.poster_link = self.site_base_url[self.link.site] + self.poster_link
+        self.poster_link = self.base_url + self.poster_link
 
 
     def get_avlink(self):
@@ -84,7 +85,7 @@ class forum_parser:
         avlink = self.post.find('a', class_="avatar")
         avlink = avlink.find("img")
         if avlink:
-            self.avlink = self.site_base_url[self.link.site] + avlink["src"]
+            self.avlink = self.base_url + avlink["src"]
             avlink.decompose()
 
     def get_contents(self):
@@ -135,7 +136,7 @@ class forum_parser:
         elif self.link.site == 'gaf':
             link = tag['href']
         if link:
-            tag.replace_with(f"[{text} said:]({self.site_base_url[self.link.site] + link})")
+            tag.replace_with(f"[{text} said:]({self.base_url + link})")
         else:
             tag.replace_with(f"{text} said:")
 
