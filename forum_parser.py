@@ -18,6 +18,7 @@ class forum_parser:
         self.icon = None
         self.site_name = None
         self.poster_link = None
+        self.bot = bot
         self.link = forum_link.forum_link(message, bot.settings.sites)
         if self.link.url:
             self.base_url = bot.settings.sites[self.link.site].base_url
@@ -168,7 +169,6 @@ class forum_parser:
             tag.replace_with(self.bot.spoiler_mask)
         for tag in self.post.findAll('button', class_='bbCodeSpoiler-button button'):
             tag.decompose()
-        print(self.spoilers)
 
     def twitter_embed(self):
         """Creates a link to Twitter from a Twitter embed."""
