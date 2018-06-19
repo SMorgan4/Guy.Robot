@@ -14,13 +14,21 @@ class UI:
         self.element_list = list(element_list)
         self.set_elements(self.element_list)
 
-    def add_element(self, element):
+    def __add__(self, element):
         self.element_list.append(element)
         self.set_elements(self.element_list)
+        return self
 
-    async def remove_element(self, element):
+    def __radd__(self, element):
+        self.__add__(element)
+
+    def __sub__(self, element):
         self.element_list = list(filter(lambda x: x != element, self.element_list))
         self.set_elements(self.element_list)
+        return self
+
+    def __rsub__(self, element):
+        self.__sub__(element)
 
     def set_elements(self, element_list):
         """Creates the list of elements to use in this UI. Supply elements names in a tuple.
@@ -86,10 +94,11 @@ class UI:
         help_text = action.parent().help_text
         for element in action.parent().ui.elements:
             help_text = f"{help_text}\n{element[0]}: {action.parent().ui.elements[element].__doc__}"
-        response = CloseableResponse(action.parent().bot_message, action.parent().bot,\
-                                        discord.Embed(title="Guy.Robot Help", description=help_text), parent=action.parent(), parent_user=action.user.id)
+        response = CloseableResponse(action.parent().bot_message, action.parent().bot,
+                                     discord.Embed(title="Guy.Robot Help", description=help_text),
+                                     parent=action.parent(), parent_user=action.user.id)
 
-        await action.parent().ui.remove_element('help')
+        action.parent().ui -= 'help'
         await response.send()
         return True
 
@@ -100,7 +109,8 @@ class UI:
             message = message.replace(action.parent().bot.spoiler_mask, str(action.parent().spoilers[i]), 1)
         embed = action.parent().embed
         embed.description = message
-        response = CloseableResponse(action.parent().bot_message, action.parent().bot, embed, parent=action.parent(), parent_user=action.user.id, persistent=True)
+        response = CloseableResponse(action.parent().bot_message, action.parent().bot, embed, parent=action.parent(),
+                                     parent_user=action.user.id, persistent=True)
         await response.dm(action.user)
         return True
 
@@ -118,7 +128,8 @@ class user_action:
 
 class UIResponse(NodeMixin):
     """Generic class for embedded message with UI"""
-    def __init__(self, user_message, bot, message, help_text=None, parent=None, parent_user=None, ui_elements=None, spoilers=None, persistent=False):
+    def __init__(self, user_message, bot, message, help_text=None, parent=None, parent_user=None, ui_elements=None,
+                 spoilers=None, persistent=False):
         super(UIResponse, self).__init__()
         self.parent = parent
         self.raw_content = message.description
@@ -138,9 +149,9 @@ class UIResponse(NodeMixin):
         else:
             self.parent_user = user_message.author
         if spoilers:
-            self.ui.add_element('show_spoiler')
+            self.ui += 'show_spoiler'
         if help_text:
-            self.ui.add_element('help')
+            self.ui += 'help'
 
     async def close(self):
         if self.parent:

@@ -23,6 +23,12 @@ class forum_link():
         if self.check_base():
             self.parse_link()
 
+    def __bool__(self):
+        if self.url:
+            return True
+        else:
+            return False
+
     def check_base(self):
         """Returns true if at least one base url exists in the message"""
         for i in self.sites:

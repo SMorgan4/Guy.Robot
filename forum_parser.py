@@ -20,8 +20,14 @@ class forum_parser:
         self.poster_link = None
         self.bot = bot
         self.link = forum_link.forum_link(message, bot.settings.sites)
-        if self.link.url:
+        if self.link:
             self.base_url = bot.settings.sites[self.link.site].base_url
+
+    def __bool__(self):
+        if self.post:
+            return True
+        else:
+            return False
 
     async def parse(self):
         """Gets the page and runs all parsing operations"""
@@ -38,7 +44,6 @@ class forum_parser:
                 self.format_quotes()
                 self.format_spoilers()
                 self.get_contents()
-
 
     async def get_page(self):
         """Gets the forum page"""

@@ -1,6 +1,7 @@
 import configparser
 import json
 
+
 class settings():
     """Imports settings from Config.cfg"""
     def __init__(self):
@@ -32,7 +33,8 @@ class settings():
             data = forum_data.read()
             forums = json.loads(data)
         for item in forums:
-            self.sites[item['name']] = (forum_settings(item['name'], item['base_url'], int(item['color']), item['forum_links']))
+            self.sites[item['name']] = (forum_settings(item['name'], item['base_url'], int(item['color']),
+                                                       item['forum_links']))
         forum_data.close()
 
 
