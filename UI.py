@@ -67,8 +67,7 @@ class UI:
 # Standard UI functions
     async def close(self, action):
         """Deletes message."""
-        await action.parent().close()
-        return False
+        return await action.parent().close()
 
     async def minimize(self, action):
         """Sets message size to minimum."""
@@ -96,13 +95,14 @@ class UI:
 
     async def show_spoiler(self, action):
         """DMs spoiler content"""
-        message = action.parent().embed.description
+        message = action.parent().raw_content
         for i in range(0, (message.count(action.parent().bot.spoiler_mask))):
             message = message.replace(action.parent().bot.spoiler_mask, str(action.parent().spoilers[i]), 1)
         embed = action.parent().embed
         embed.description = message
-        response = CloseableResponse(action.parent().bot_message, action.parent().bot, embed)
+        response = CloseableResponse(action.parent().bot_message, action.parent().bot, embed, parent=action.parent(), parent_user=action.user.id, persistent=True)
         await response.dm(action.user)
+        return True
 
 
 class user_action:
@@ -118,8 +118,10 @@ class user_action:
 
 class UIResponse(NodeMixin):
     """Generic class for embedded message with UI"""
-    def __init__(self, user_message, bot, message, help_text, parent=None, parent_user=None, ui_elements=None, spoilers=None):
+    def __init__(self, user_message, bot, message, help_text=None, parent=None, parent_user=None, ui_elements=None, spoilers=None, persistent=False):
+        super(UIResponse, self).__init__()
         self.parent = parent
+        self.raw_content = message.description
         self.bot_message = None
         if ui_elements:
             self.ui = UI(self, ui_elements)
@@ -130,6 +132,7 @@ class UIResponse(NodeMixin):
         self.bot = bot
         self.help_text = help_text
         self.spoilers = spoilers
+        self.persistent = persistent
         if parent_user:
             self.parent_user = parent_user
         else:
@@ -140,11 +143,16 @@ class UIResponse(NodeMixin):
             self.ui.add_element('help')
 
     async def close(self):
-        for node in self.descendants:
-            await node.close()
         if self.parent:
             self.parent.children = self.siblings
+        for node in self.descendants:
+            if not node.persistent:
+                await node.close()
         await self.bot_message.delete()
+        if not self.parent and not self.siblings:
+            return False
+        else:
+            return True
 
     async def send(self):
         """Sends message and starts UI"""
@@ -158,20 +166,20 @@ class UIResponse(NodeMixin):
 
 class CloseableResponse(UIResponse):
     """Class for user closable embedded bot messages"""
-    def __init__(self, user_message, bot, message, help_text=None, parent=None, parent_user=None, spoilers=None):
-        UIResponse.__init__(self, user_message, bot, message, help_text, parent, parent_user, ui_elements=["close"], spoilers=spoilers)
+    def __init__(self, user_message, bot, message, **kwargs):
+        UIResponse.__init__(self, user_message, bot, message, **kwargs, ui_elements=["close"])
 
 
 class ResizeableResponse(UIResponse):
     """Creates an embedded message that is resizeable and closeable"""
-    def __init__(self, user_message, bot, message, size="std", help_text=None, parent=None, parent_user=None, spoilers=None):
+    def __init__(self, user_message, bot, message, size="std", **kwargs):
         self.size = size
         self.lines = []
         self.get_lines(message.description, bot.settings.line_length)
         ui_elements = None
         if len(self.lines) < bot.settings.std_lines:
             ui_elements = ["close"]
-        UIResponse.__init__(self, user_message, bot, message, help_text, parent, parent_user, ui_elements=ui_elements, spoilers=spoilers)
+        UIResponse.__init__(self, user_message, bot, message, ui_elements=ui_elements, **kwargs)
         self.select_lines()
 
     def get_lines(self, content, line_length):
