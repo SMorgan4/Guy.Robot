@@ -135,7 +135,6 @@ class UIResponse(NodeMixin):
         else:
             self.parent_user = user_message.author
         if spoilers:
-            print(self.spoilers)
             self.ui.add_element('show_spoiler')
         if help_text:
             self.ui.add_element('help')
