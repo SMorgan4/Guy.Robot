@@ -19,6 +19,7 @@ class meta_cog:
         message.add_field(name='Owner', value=f'{owner.name}#{owner.discriminator}')
         message.add_field(name='GitHub', value='[Guy.Robot](https://github.com/SMorgan4/Guy.Robot)')
         message.add_field(name='Servers', value=str(len(ctx.bot.guilds)))
+        message.add_field(name='Guy.Robot Server', value='[Join](https://discord.gg/VZGrzW5)')
         response = UI.CloseableResponse(ctx.message, ctx.bot, message)
         await response.send()
 
