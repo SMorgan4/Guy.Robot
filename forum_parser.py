@@ -145,11 +145,9 @@ class forum_parser:
             else:
                 tag.decompose()
         if self.link.site == 'gaf':
-            count = 0
-            for tag in self.post.findAll('img', class_="smilie"):
+            for count, tag in enumerate(self.post.findAll('img', class_="smilie")):
                 tag.replace_with(self.images[count] + '\n')
                 tag.decompose()
-                count += 1
 
     def twitter_embed(self):
         """Creates a link to Twitter from a Twitter embed."""
