@@ -9,7 +9,7 @@ class UI:
     def __init__(self, parent, element_list=('max', 'min', 'close')):
         self.parent = weakref.ref(parent)
         self.standard_elements = {'max': ('➕', self.maximize), 'min': ('➖', self.minimize), 'close': ('✖', self.close),
-                                  'help': ('❓', self.help)}
+                                  'help': ('❓', self.help), 'show_spoiler': ('🔍', self.show_spoiler)}
         self.elements = {}
         self.element_list = list(element_list)
         self.set_elements(self.element_list)
@@ -67,8 +67,7 @@ class UI:
 # Standard UI functions
     async def close(self, action):
         """Deletes message."""
-        await action.parent().close()
-        return False
+        return await action.parent().close()
 
     async def minimize(self, action):
         """Sets message size to minimum."""
@@ -94,6 +93,17 @@ class UI:
         await response.send()
         return True
 
+    async def show_spoiler(self, action):
+        """DMs spoiler content"""
+        message = action.parent().raw_content
+        for i in range(0, (message.count(action.parent().bot.spoiler_mask))):
+            message = message.replace(action.parent().bot.spoiler_mask, str(action.parent().spoilers[i]), 1)
+        embed = action.parent().embed
+        embed.description = message
+        response = CloseableResponse(action.parent().bot_message, action.parent().bot, embed, parent=action.parent(), parent_user=action.user.id, persistent=True)
+        await response.dm(action.user)
+        return True
+
 
 class user_action:
     """Class containing user ui interactions"""
@@ -108,8 +118,10 @@ class user_action:
 
 class UIResponse(NodeMixin):
     """Generic class for embedded message with UI"""
-    def __init__(self, user_message, bot, message, help_text, parent=None, parent_user=None, ui_elements=None):
+    def __init__(self, user_message, bot, message, help_text=None, parent=None, parent_user=None, ui_elements=None, spoilers=None, persistent=False):
+        super(UIResponse, self).__init__()
         self.parent = parent
+        self.raw_content = message.description
         self.bot_message = None
         if ui_elements:
             self.ui = UI(self, ui_elements)
@@ -119,42 +131,55 @@ class UIResponse(NodeMixin):
         self.user_message = user_message
         self.bot = bot
         self.help_text = help_text
+        self.spoilers = spoilers
+        self.persistent = persistent
         if parent_user:
             self.parent_user = parent_user
         else:
             self.parent_user = user_message.author
+        if spoilers:
+            self.ui.add_element('show_spoiler')
         if help_text:
             self.ui.add_element('help')
 
     async def close(self):
-        for node in self.descendants:
-            await node.close()
         if self.parent:
             self.parent.children = self.siblings
+        for node in self.descendants:
+            if not node.persistent:
+                await node.close()
         await self.bot_message.delete()
+        if not self.parent and not self.siblings:
+            return False
+        else:
+            return True
 
     async def send(self):
         """Sends message and starts UI"""
         self.bot_message = await self.user_message.channel.send(embed=self.embed)
         await self.ui.start(self.bot)
 
+    async def dm(self, user):
+        self.bot_message = await user.send(embed=self.embed)
+        await self.ui.start(self.bot)
+
 
 class CloseableResponse(UIResponse):
     """Class for user closable embedded bot messages"""
-    def __init__(self, user_message, bot, message, help_text=None, parent=None, parent_user=None):
-        UIResponse.__init__(self, user_message, bot, message, help_text, parent, parent_user, ui_elements=["close"])
+    def __init__(self, user_message, bot, message, **kwargs):
+        UIResponse.__init__(self, user_message, bot, message, **kwargs, ui_elements=["close"])
 
 
 class ResizeableResponse(UIResponse):
     """Creates an embedded message that is resizeable and closeable"""
-    def __init__(self, user_message, bot, message, size="std", help_text=None, parent=None, parent_user=None):
+    def __init__(self, user_message, bot, message, size="std", **kwargs):
         self.size = size
         self.lines = []
         self.get_lines(message.description, bot.settings.line_length)
         ui_elements = None
         if len(self.lines) < bot.settings.std_lines:
             ui_elements = ["close"]
-        UIResponse.__init__(self, user_message, bot, message, help_text, parent, parent_user, ui_elements=ui_elements)
+        UIResponse.__init__(self, user_message, bot, message, ui_elements=ui_elements, **kwargs)
         self.select_lines()
 
     def get_lines(self, content, line_length):

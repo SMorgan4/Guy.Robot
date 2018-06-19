@@ -22,5 +22,5 @@ async def forum_preview(message, bot):
                     embed.set_image(url=post.images[0])
                 embed.color = bot.settings.sites[post.link.site].color
                 embed.set_footer(text=post.site_name, icon_url=post.icon)
-                response = UI.ResizeableResponse(message, bot, embed, help_text=help_text)
+                response = UI.ResizeableResponse(message, bot, embed, help_text=help_text, spoilers=post.spoilers)
                 await response.send()

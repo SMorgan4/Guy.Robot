@@ -14,9 +14,11 @@ class forum_parser:
         self.title = None
         self.images = []
         self.videos = []
+        self.spoilers = []
         self.icon = None
         self.site_name = None
         self.poster_link = None
+        self.bot = bot
         self.link = forum_link.forum_link(message, bot.settings.sites)
         if self.link.url:
             self.base_url = bot.settings.sites[self.link.site].base_url
@@ -34,7 +36,9 @@ class forum_parser:
                 self.format_images()
                 self.youtube_embed()
                 self.format_quotes()
+                self.format_spoilers()
                 self.get_contents()
+
 
     async def get_page(self):
         """Gets the forum page"""
@@ -93,17 +97,18 @@ class forum_parser:
             self.content = self.post.find('div', class_="bbWrapper")
         for tag in self.content.findAll('script'):
             tag.decompose()
-        self.mark_down_links()
+        self.content = self.mark_down_links(self.content)
         self.content = self.content.get_text().strip()
         self.content = re.sub('\n+', '\n', self.content)
 
-    def mark_down_links(self):
+    def mark_down_links(self, content):
         """Marks down all links in a post. Runs after format quotes as to not mark down links within quotes because
         marked down links are not supported within the code blocks the bot uses for quotes."""
-        for tag in self.content.findAll('a', href=True):
+        for tag in content.findAll('a', href=True):
             if tag.get_text() != '':
                 mark_down = f"[{tag.get_text()}]({tag['href']})"
                 tag.replace_with(mark_down)
+        return content
 
     def format_quotes(self):
         """"Wraps quotes in code tag for aesthetics. Adds quote attribution link where possible."""
@@ -148,6 +153,20 @@ class forum_parser:
             for count, tag in enumerate(self.post.findAll('img', class_="smilie")):
                 tag.replace_with(self.images[count] + '\n')
                 tag.decompose()
+
+    def format_spoilers(self):
+        for tag in self.post.findAll('div', class_="SpoilerTarget bbCodeSpoilerText"):
+            tag = self.mark_down_links(tag)
+            self.spoilers.append(tag.get_text().strip())
+            tag.replace_with(self.bot.spoiler_mask)
+        for tag in self.post.findAll('button', class_='button bbCodeSpoilerButton ToggleTrigger Tooltip JsOnly'):
+            tag.decompose()
+        for tag in self.post.findAll('div', class_="bbCodeBlock bbCodeBlock--spoiler"):
+            tag = self.mark_down_links(tag)
+            self.spoilers.append(tag.get_text().strip())
+            tag.replace_with(self.bot.spoiler_mask)
+        for tag in self.post.findAll('button', class_='bbCodeSpoiler-button button'):
+            tag.decompose()
 
     def twitter_embed(self):
         """Creates a link to Twitter from a Twitter embed."""
