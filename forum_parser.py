@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import forum_link
 import re
 import aiohttp
+from datetime import datetime
 
 
 class forum_parser:
@@ -19,6 +20,7 @@ class forum_parser:
         self.site_name = None
         self.poster_link = None
         self.bot = bot
+        self.timestamp = None
         self.link = forum_link.forum_link(message, bot.settings.sites)
         if self.link:
             self.base_url = bot.settings.sites[self.link.site].base_url
@@ -38,6 +40,7 @@ class forum_parser:
             if self.post:
                 self.get_name()
                 self.get_avlink()
+                self.get_time()
                 self.twitter_embed()
                 self.format_images()
                 self.youtube_embed()
@@ -85,7 +88,6 @@ class forum_parser:
             self.poster_link = self.poster_link[1:]
         self.poster_link = self.base_url + self.poster_link
 
-
     def get_avlink(self):
         """Gets the link to the poster's avatar"""
         avlink = self.post.find('a', class_="avatar")
@@ -93,6 +95,14 @@ class forum_parser:
         if avlink:
             self.avlink = self.base_url + avlink["src"]
             avlink.decompose()
+
+    def get_time(self):
+        timestamp = self.post.find('span', class_="DateTime")["title"]
+        print(timestamp)
+        timestamp = datetime.strptime(timestamp, '%b %d, %Y at %H:%M %p') #  at %H:%M %p
+        timestamp = timestamp.astimezone()
+        print(timestamp)
+        self.timestamp = timestamp
 
     def get_contents(self):
         """Gets the post text"""

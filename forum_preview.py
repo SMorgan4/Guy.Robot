@@ -13,7 +13,7 @@ async def forum_preview(message, bot):
         if post.link:
             await post.parse()
             if post:
-                embed = discord.Embed(title=post.title, description=post.content, url=post.link.url)
+                embed = discord.Embed(title=post.title, description=post.content, url=post.link.url, timestamp=post.timestamp)
                 if post.avlink:
                     embed.set_author(name=post.name, icon_url=post.avlink, url=post.poster_link)
                 else:
