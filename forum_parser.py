@@ -97,12 +97,16 @@ class forum_parser:
             avlink.decompose()
 
     def get_time(self):
-        timestamp = self.post.find('span', class_="DateTime")["title"]
-        print(timestamp)
-        timestamp = datetime.strptime(timestamp, '%b %d, %Y at %H:%M %p') #  at %H:%M %p
-        timestamp = timestamp.astimezone()
-        print(timestamp)
-        self.timestamp = timestamp
+        timestamp = None
+        if self.post.find('span', class_="DateTime"):
+            timestamp = self.post.find('span', class_="DateTime")["title"]
+            print(timestamp)
+            timestamp = datetime.strptime(timestamp, '%b %d, %Y at %H:%M %p')
+        elif self.post.find('time', class_="u-dt"):
+            timestamp = datetime.fromtimestamp(int(self.post.find('time', class_="u-dt")["data-time"]))
+        if timestamp:
+            print(timestamp)
+            self.timestamp = timestamp.astimezone()
 
     def get_contents(self):
         """Gets the post text"""
