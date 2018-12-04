@@ -103,7 +103,7 @@ class UI:
         return True
 
     async def show_spoiler(self, action):
-        """DMs spoiler content"""
+        """DMs spoiler content to you."""
         message = action.parent().raw_content
         for i in range(0, (message.count(action.parent().bot.spoiler_mask))):
             message = message.replace(action.parent().bot.spoiler_mask, str(action.parent().spoilers[i]), 1)

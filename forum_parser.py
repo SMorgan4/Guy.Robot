@@ -59,19 +59,19 @@ class forum_parser:
     def get_meta(self, page):
         """Gets page, icon and title from metatags, should work for all forums"""
         self.title = page.find('meta', property='og:title')['content']
-        self.icon = page.find('meta', property='og:image')['content']
+        if page.find('meta', property='og:image'):
+            self.icon = page.find('meta', property='og:image')['content']
+        elif page.find('link', rel="icon"):
+            self.icon = page.find('link', rel="icon")['href']
         self.site_name = page.find('meta', property='og:site_name')['content']
 
     def get_post(self, page):
         """Gets a post from a page"""
         if self.link.site == 'era':
             if self.link.type == 'post':
-                self.post = page.find("li", id=self.link.post_id)
+                self.post = page.find("article", id=f"js-{self.link.post_id}")
             else:
-                for post in page.findAll('li', class_="message"):
-                    if post.find("acronym", title="Original Poster"):
-                        self.post = post
-                        break
+                self.post = page.find("article")
         elif self.link.site == 'gaf':
             if self.link.type == 'post':
                 self.post = page.find('article', {'data-content': self.link.post_id})
@@ -100,18 +100,16 @@ class forum_parser:
         timestamp = None
         if self.post.find('span', class_="DateTime"):
             timestamp = self.post.find('span', class_="DateTime")["title"]
-            print(timestamp)
             timestamp = datetime.strptime(timestamp, '%b %d, %Y at %H:%M %p')
         elif self.post.find('time', class_="u-dt"):
             timestamp = datetime.fromtimestamp(int(self.post.find('time', class_="u-dt")["data-time"]))
         if timestamp:
-            print(timestamp)
             self.timestamp = timestamp.astimezone()
 
     def get_contents(self):
         """Gets the post text"""
         if self.link.site == 'era':
-            self.content = self.post.find('div', class_="messageContent")
+            self.content = self.post.find('div', class_="bbWrapper")
         else:
             self.content = self.post.find('div', class_="bbWrapper")
         for tag in self.content.findAll('script'):
@@ -190,8 +188,12 @@ class forum_parser:
     def twitter_embed(self):
         """Creates a link to Twitter from a Twitter embed."""
         for tag in self.post.findAll('iframe', attrs={'data-s9e-mediaembed': 'twitter'}):
-            tweet_id = tag['src'].split('.html#')[1]
+            if self.link.site == 'era':
+                tweet_id = tag['data-s9e-lazyload-src'].split('.html#')[1]
+            else:
+                tweet_id = tag['src'].split('.html#')[1]
             tag.replace_with('https://twitter.com/user/status/' + tweet_id)
+        print("embeded tweet")
 
     def youtube_embed(self):
         """Creates a link to Youtube from a youtube embed. Adds to a list of video links."""

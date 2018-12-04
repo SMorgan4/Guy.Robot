@@ -6,7 +6,9 @@ import UI
 async def forum_preview(message, bot):
     """Creates a preview of a forum post"""
     help_text = 'This is an automatically generated preview of a forum post.\n' \
-                'The bot currently supports previews for NeoGAF.com and ResetEra.com\n'
+                'The bot currently supports previews for NeoGAF.com and ResetEra.com\n' \
+                f'To add to your server have an admin accept [this link]({bot.settings.auth_link})\n' \
+                'For more information use the !gr command'
     if message.embeds:
         # if not embed previews are suppressed
         post = forum_parser.forum_parser(message, bot)
