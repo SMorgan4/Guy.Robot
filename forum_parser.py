@@ -193,7 +193,6 @@ class forum_parser:
             else:
                 tweet_id = tag['src'].split('.html#')[1]
             tag.replace_with('https://twitter.com/user/status/' + tweet_id)
-        print("embeded tweet")
 
     def youtube_embed(self):
         """Creates a link to Youtube from a youtube embed. Adds to a list of video links."""
